@@ -1,0 +1,10 @@
+const API="https://prod.fn-api.cc/v1/itemshop";
+const SELLER_PACKAGES=[{vb:500,mxn:70},{vb:800,mxn:100},{vb:1000,mxn:140},{vb:1200,mxn:150},{vb:1500,mxn:170},{vb:2000,mxn:270}];
+let items=[];const shop=document.getElementById('shop'),msg=document.getElementById('message'),search=document.getElementById('search');
+const money=n=>Number(n||0).toLocaleString('es-MX');
+function sellerPrice(v){const p=SELLER_PACKAGES.find(x=>x.vb>=Number(v));return p?p.mxn:Math.ceil(Number(v)/2000)*270}
+function sellerPackage(v){const p=SELLER_PACKAGES.find(x=>x.vb>=Number(v));return p?p.vb:Math.ceil(Number(v)/2000)*2000}
+function norm(d){const a=Array.isArray(d)?d:(d.offers||d.data||d.shop||[]);return a.map((x,i)=>{const c=x.cosmetic||x.item||x;return{id:x.offerId||x.id||i,name:c.name||x.name||'Objeto',type:c.type?.displayValue||c.type||x.type||'Objeto',image:c.images?.featured||c.images?.icon||c.images?.background||x.image||'',price:x.finalPrice??x.price??c.price??x.vbucks??0}}).filter(x=>x.image)}
+function render(){const q=search.value.toLowerCase();shop.innerHTML=items.filter(x=>x.name.toLowerCase().includes(q)).map(x=>`<article class="card"><img src="${x.image}" alt="${x.name}"><div class="info"><div class="type">${x.type}</div><div class="name">${x.name}</div><div class="price">${money(x.price)} <span class="vbuck">V-Bucks</span></div><div class="seller-price">💵 Tu precio: <strong>$${money(sellerPrice(x.price))} MXN</strong></div><div class="seller-note">Por regalo • paquete de ${money(sellerPackage(x.price))} V-Bucks</div></div></article>`).join('')}
+async function load(){try{msg.textContent='Cargando la tienda...';const r=await fetch(API,{cache:'no-store'});if(!r.ok)throw Error(r.status);items=norm(await r.json());msg.style.display=items.length?'none':'block';render();document.getElementById('lastUpdate').textContent='Actualizado automáticamente • '+new Date().toLocaleTimeString('es-MX')}catch(e){msg.textContent='No se pudo cargar la tienda. Revisa la conexión de la API.'}}
+search.addEventListener('input',render);load();setInterval(load,1800000);
